@@ -19,6 +19,7 @@ export default function App() {
   const [currentPair, setCurrentPair] = useState([]);
   const [historyPairs, setHistoryPairs] = useState([]);
   const [sessionPairs, setSessionPairs] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +62,39 @@ export default function App() {
     } catch (error) {
       alert("Falha na autenticação. Verifique as credenciais e tente novamente.");
     }
+  };
+
+  const loadInitialPlayers = async () => {
+    const malePlayers = [
+      "Alexandre Cascardo", "Bottino", "Claudio Quiroz", "Colonese", 
+      "Eduardo Caetano", "Eduardo Carneiro", "Fernando Cavalcante", "Fittipaldi", 
+      "Flavio", "Foguete", "Gustavo Carneiro", "Joao Barreto", 
+      "Joao Reis", "Joao Vita", "Jose Felipe", "Julio Cesar", 
+      "Lincoln Rollin", "Luiz Henrique", "Marco Aranha", "Michel Neves", 
+      "Neco", "Reco", "Rodrigo Ferreira", "Romulo", 
+      "Taylor", "Tuninho", "Vanzilota", "Vitor", "Willy", "Ximenes"
+    ];
+
+    const femalePlayers = [
+      "Adriane", "Ana Quiroz", "Andrea", "Cristina", "Giovanna", 
+      "Jeovanna", "Katia", "Leticia", "Mariana Sa", "Natalia 1", 
+      "Natalia 2", "Rose", "Sandra Conti", "Valeria"
+    ];
+
+    setIsUploading(true);
+    try {
+      for (const name of malePlayers) {
+        await addDoc(collection(db, "players"), { name: name, gender: "M" });
+      }
+      for (const name of femalePlayers) {
+        await addDoc(collection(db, "players"), { name: name, gender: "F" });
+      }
+      alert("Carga concluida com sucesso. Recarregue a pagina para ver todos os nomes.");
+    } catch (error) {
+      console.error("Erro ao inserir jogadores", error);
+      alert("Ocorreu um erro durante a carga de dados.");
+    }
+    setIsUploading(false);
   };
 
   const togglePresence = (player, group, setGroup) => {
@@ -189,6 +223,13 @@ export default function App() {
       <main className="max-w-5xl mx-auto p-6 mt-6 bg-white rounded-lg shadow-lg border border-gray-200">
         {appStage === 'setup' && (
           <div>
+            <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg flex justify-between items-center">
+              <span className="text-blue-800 font-medium">Carga Inicial de Jogadores no Banco de Dados</span>
+              <button onClick={loadInitialPlayers} disabled={isUploading} className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 disabled:opacity-50">
+                {isUploading ? 'Carregando...' : 'Carregar Banco de Dados'}
+              </button>
+            </div>
+
             <h2 className="text-2xl font-bold text-brandRed mb-6 border-b pb-2">Passo 1: Selecionar Jogadores Presentes</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-red-50 p-4 rounded-lg border border-red-100">
