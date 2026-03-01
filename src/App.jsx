@@ -3,13 +3,13 @@ import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 
-const FEMALE_ROSTER = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14"];
-const MALE_ROSTER = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "M13", "M14", "M15", "M16", "M17", "M18", "M19", "M20", "M21", "M22", "M23", "M24", "M25", "M26", "M27", "M28", "M29", "M30"];
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const [femaleRoster, setFemaleRoster] = useState([]);
+  const [maleRoster, setMaleRoster] = useState([]);
 
   const [presentFemales, setPresentFemales] = useState([]);
   const [presentMales, setPresentMales] = useState([]);
@@ -21,23 +21,38 @@ export default function App() {
   const [sessionPairs, setSessionPairs] = useState([]);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const historySnapshot = await getDocs(collection(db, "drawHistory"));
+        const pairs = [];
+        historySnapshot.forEach((doc) => {
+          pairs.push(doc.data());
+        });
+        setHistoryPairs(pairs);
+
+        const playersSnapshot = await getDocs(collection(db, "players"));
+        const females = [];
+        const males = [];
+        playersSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.gender === "F") females.push(data.name);
+          if (data.gender === "M") males.push(data.name);
+        });
+        setFemaleRoster(females.sort());
+        setMaleRoster(males.sort());
+      } catch (error) {
+        console.error("Error fetching data", error);
+      }
+    };
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        fetchHistory();
+        fetchData();
       }
     });
     return () => unsubscribe();
   }, []);
-
-  const fetchHistory = async () => {
-    const querySnapshot = await getDocs(collection(db, "drawHistory"));
-    const pairs = [];
-    querySnapshot.forEach((doc) => {
-      pairs.push(doc.data());
-    });
-    setHistoryPairs(pairs);
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -61,15 +76,26 @@ export default function App() {
       alert("Please ensure both male and female selections have an even number of present players.");
       return;
     }
-    setPool([...presentFemales]);
-    setAppStage('drawFemale');
+    
+    if (presentFemales.length === 0 && presentMales.length === 0) {
+      alert("Please select at least one group of players to start the draw.");
+      return;
+    }
+
+    if (presentFemales.length > 0) {
+      setPool([...presentFemales]);
+      setAppStage('drawFemale');
+    } else {
+      setPool([...presentMales]);
+      setAppStage('drawMale');
+    }
   };
 
   const handleAction = async () => {
     if (currentPair.length === 2) {
       setCurrentPair([]);
       if (pool.length === 0) {
-        if (appStage === 'drawFemale') {
+        if (appStage === 'drawFemale' && presentMales.length > 0) {
           setAppStage('drawMale');
           setPool([...presentMales]);
         } else {
@@ -80,7 +106,7 @@ export default function App() {
     }
 
     if (pool.length === 0) {
-      if (appStage === 'drawFemale') {
+      if (appStage === 'drawFemale' && presentMales.length > 0) {
         setAppStage('drawMale');
         setPool([...presentMales]);
       } else {
@@ -167,12 +193,13 @@ export default function App() {
                   <span className="bg-white px-3 py-1 rounded-full text-sm border border-brandRed">{presentFemales.length} Selected</span>
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {FEMALE_ROSTER.map(player => (
+                  {femaleRoster.map(player => (
                     <label key={player} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-red-100 rounded transition duration-200">
                       <input type="checkbox" className="w-5 h-5 text-brandRed focus:ring-brandRed border-gray-300 rounded" onChange={() => togglePresence(player, presentFemales, setPresentFemales)} /> 
                       <span className="font-medium">{player}</span>
                     </label>
                   ))}
+                  {femaleRoster.length === 0 && <p className="text-sm text-gray-500 col-span-2">Loading players</p>}
                 </div>
               </div>
               
@@ -182,12 +209,13 @@ export default function App() {
                   <span className="bg-white px-3 py-1 rounded-full text-sm border border-gray-400">{presentMales.length} Selected</span>
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {MALE_ROSTER.map(player => (
+                  {maleRoster.map(player => (
                     <label key={player} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-200 rounded transition duration-200">
                       <input type="checkbox" className="w-5 h-5 text-brandRed focus:ring-brandRed border-gray-300 rounded" onChange={() => togglePresence(player, presentMales, setPresentMales)} /> 
                       <span className="font-medium">{player}</span>
                     </label>
                   ))}
+                  {maleRoster.length === 0 && <p className="text-sm text-gray-500 col-span-2">Loading players</p>}
                 </div>
               </div>
             </div>
