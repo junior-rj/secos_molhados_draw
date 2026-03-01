@@ -77,8 +77,8 @@ export default function App() {
 
     const femalePlayers = [
       "Adriane", "Ana Quiroz", "Andrea", "Cristina", "Giovanna", 
-      "Jeovanna", "Katia", "Leticia", "Mariana Sa", "Natalia 1", 
-      "Natalia 2", "Rose", "Sandra Conti", "Valeria"
+      "Jeovanna", "Katia", "Leticia", "Mariana Sa", "Nubia", 
+      "Natalia", "Rose", "Sandra Conti", "Valeria"
     ];
 
     setIsUploading(true);
