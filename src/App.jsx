@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -11,15 +11,25 @@ export default function App() {
   const [femaleRoster, setFemaleRoster] = useState([]);
   const [maleRoster, setMaleRoster] = useState([]);
 
+  const [isFirstRound, setIsFirstRound] = useState(true);
+
   const [presentFemales, setPresentFemales] = useState([]);
   const [presentMales, setPresentMales] = useState([]);
+
+  const [femaleGroupA, setFemaleGroupA] = useState([]);
+  const [femaleGroupB, setFemaleGroupB] = useState([]);
+  const [maleGroupA, setMaleGroupA] = useState([]);
+  const [maleGroupB, setMaleGroupB] = useState([]);
+
   const [appStage, setAppStage] = useState('setup'); 
 
   const [pool, setPool] = useState([]);
+  const [poolA, setPoolA] = useState([]);
+  const [poolB, setPoolB] = useState([]);
+
   const [currentPair, setCurrentPair] = useState([]);
   const [historyPairs, setHistoryPairs] = useState([]);
   const [sessionPairs, setSessionPairs] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,46 +74,6 @@ export default function App() {
     }
   };
 
-  const loadInitialPlayers = async () => {
-    const malePlayers = [
-      "Alexandre Cascardo", "Bottino", "Claudio Quiroz", "Colonese", 
-      "Eduardo Caetano", "Eduardo Carneiro", "Fernando Cavalcante", "Fittipaldi", 
-      "Flavio", "Foguete", "Gustavo Carneiro", "Joao Barreto", 
-      "Joao Reis", "Joao Vita", "Jose Felipe", "Julio Cesar", 
-      "Lincoln Rollin", "Luiz Henrique", "Marco Aranha", "Michel Neves", 
-      "Neco", "Reco", "Rodrigo Ferreira", "Romulo", 
-      "Taylor", "Tuninho", "Vanzilota", "Vitor", "Willy", "Ximenes"
-    ];
-
-    const femalePlayers = [
-      "Adriane", "Ana Quiroz", "Andrea", "Cristina", "Giovanna", 
-      "Jeovanna", "Katia", "Leticia", "Mariana Sa", "Nubia", 
-      "Natalia", "Rose", "Sandra Conti", "Valeria"
-    ];
-
-    setIsUploading(true);
-    try {
-      const playersSnapshot = await getDocs(collection(db, "players"));
-      const deletePromises = [];
-      playersSnapshot.forEach((documentSnapshot) => {
-        deletePromises.push(deleteDoc(doc(db, "players", documentSnapshot.id)));
-      });
-      await Promise.all(deletePromises);
-
-      for (const name of malePlayers) {
-        await addDoc(collection(db, "players"), { name: name, gender: "M" });
-      }
-      for (const name of femalePlayers) {
-        await addDoc(collection(db, "players"), { name: name, gender: "F" });
-      }
-      alert("Carga concluida com sucesso. O banco antigo foi limpo e os nomes foram atualizados. Recarregue a pagina para ver os nomes.");
-    } catch (error) {
-      console.error("Erro ao inserir ou apagar jogadores", error);
-      alert("Ocorreu um erro durante a carga de dados.");
-    }
-    setIsUploading(false);
-  };
-
   const togglePresence = (player, group, setGroup) => {
     if (group.includes(player)) {
       setGroup(group.filter(p => p !== player));
@@ -112,44 +82,97 @@ export default function App() {
     }
   };
 
+  const handleGroupSelection = (player, group, setGrpA, setGrpB, grpA, grpB) => {
+    if (group === 'A') {
+      if (!grpA.includes(player)) setGrpA([...grpA, player]);
+      if (grpB.includes(player)) setGrpB(grpB.filter(p => p !== player));
+    } else if (group === 'B') {
+      if (!grpB.includes(player)) setGrpB([...grpB, player]);
+      if (grpA.includes(player)) setGrpA(grpA.filter(p => p !== player));
+    } else {
+      if (grpA.includes(player)) setGrpA(grpA.filter(p => p !== player));
+      if (grpB.includes(player)) setGrpB(grpB.filter(p => p !== player));
+    }
+  };
+
   const startDrawFemale = () => {
-    if (presentFemales.length === 0) {
-      alert("Selecione pelo menos duas jogadoras para iniciar o sorteio feminino.");
-      return;
+    if (isFirstRound) {
+      if (presentFemales.length === 0) {
+        alert("Selecione pelo menos duas jogadoras para iniciar o sorteio feminino.");
+        return;
+      }
+      if (presentFemales.length % 2 !== 0) {
+        alert("Garanta que a selecao feminina tenha um numero par de presentes.");
+        return;
+      }
+      setPool([...presentFemales]);
+    } else {
+      if (femaleGroupA.length === 0 || femaleGroupB.length === 0) {
+        alert("Selecione jogadoras para os Grupos A e B.");
+        return;
+      }
+      if (femaleGroupA.length !== femaleGroupB.length) {
+        alert("Os Grupos A e B femininos precisam ter a mesma quantidade de jogadoras.");
+        return;
+      }
+      setPoolA([...femaleGroupA]);
+      setPoolB([...femaleGroupB]);
     }
-    if (presentFemales.length % 2 !== 0) {
-      alert("Garanta que a selecao feminina tenha um numero par de presentes.");
-      return;
-    }
-    setPool([...presentFemales]);
     setAppStage('drawFemale');
   };
 
   const startDrawMale = () => {
-    if (presentMales.length === 0) {
-      alert("Selecione pelo menos dois jogadores para iniciar o sorteio masculino.");
-      return;
+    if (isFirstRound) {
+      if (presentMales.length === 0) {
+        alert("Selecione pelo menos dois jogadores para iniciar o sorteio masculino.");
+        return;
+      }
+      if (presentMales.length % 2 !== 0) {
+        alert("Garanta que a selecao masculina tenha um numero par de presentes.");
+        return;
+      }
+      setPool([...presentMales]);
+    } else {
+      if (maleGroupA.length === 0 || maleGroupB.length === 0) {
+        alert("Selecione jogadores para os Grupos A e B.");
+        return;
+      }
+      if (maleGroupA.length !== maleGroupB.length) {
+        alert("Os Grupos A e B masculinos precisam ter a mesma quantidade de jogadores.");
+        return;
+      }
+      setPoolA([...maleGroupA]);
+      setPoolB([...maleGroupB]);
     }
-    if (presentMales.length % 2 !== 0) {
-      alert("Garanta que a selecao masculina tenha um numero par de presentes.");
-      return;
-    }
-    setPool([...presentMales]);
     setAppStage('drawMale');
   };
 
   const drawFirst = () => {
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    const p1 = pool[randomIndex];
-    setCurrentPair([p1]);
-    setPool(pool.filter(p => p !== p1));
+    if (isFirstRound) {
+      const randomIndex = Math.floor(Math.random() * pool.length);
+      const p1 = pool[randomIndex];
+      setCurrentPair([p1]);
+      setPool(pool.filter(p => p !== p1));
+    } else {
+      const randomIndex = Math.floor(Math.random() * poolA.length);
+      const p1 = poolA[randomIndex];
+      setCurrentPair([p1]);
+      setPoolA(poolA.filter(p => p !== p1));
+    }
   };
 
   const drawSecond = () => {
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    const p2 = pool[randomIndex];
-    setCurrentPair([...currentPair, p2]);
-    setPool(pool.filter(p => p !== p2));
+    if (isFirstRound) {
+      const randomIndex = Math.floor(Math.random() * pool.length);
+      const p2 = pool[randomIndex];
+      setCurrentPair([...currentPair, p2]);
+      setPool(pool.filter(p => p !== p2));
+    } else {
+      const randomIndex = Math.floor(Math.random() * poolB.length);
+      const p2 = poolB[randomIndex];
+      setCurrentPair([...currentPair, p2]);
+      setPoolB(poolB.filter(p => p !== p2));
+    }
   };
 
   const confirmPair = async () => {
@@ -167,13 +190,24 @@ export default function App() {
     setSessionPairs([...sessionPairs, newPairData]);
     setCurrentPair([]);
 
-    if (pool.length === 0) {
-      setAppStage('done');
+    if (isFirstRound) {
+      if (pool.length === 0) {
+        setAppStage('done');
+      }
+    } else {
+      if (poolA.length === 0) {
+        setAppStage('done');
+      }
     }
   };
 
   const cancelPair = () => {
-    setPool([...pool, currentPair[0], currentPair[1]]);
+    if (isFirstRound) {
+      setPool([...pool, currentPair[0], currentPair[1]]);
+    } else {
+      setPoolA([...poolA, currentPair[0]]);
+      setPoolB([...poolB, currentPair[1]]);
+    }
     setCurrentPair([]);
   };
 
@@ -185,6 +219,8 @@ export default function App() {
         (match.player1 === currentPair[1] && match.player2 === currentPair[0])
       );
     }
+
+    const remainingPlayers = isFirstRound ? pool.length : poolA.length;
 
     if (currentPair.length === 0) {
       return (
@@ -203,7 +239,7 @@ export default function App() {
     }
     
     if (currentPair.length === 2) {
-      if (isRepeated && pool.length > 0) {
+      if (isRepeated && remainingPlayers > 0) {
         return (
           <div className="flex flex-col items-center">
             <p className="text-red-600 font-bold mb-4 text-lg">Aviso: Esta dupla ja jogou junta anteriormente. Sorteio invalido.</p>
@@ -212,7 +248,7 @@ export default function App() {
             </button>
           </div>
         );
-      } else if (isRepeated && pool.length === 0) {
+      } else if (isRepeated && remainingPlayers === 0) {
         return (
           <div className="flex flex-col items-center space-y-4">
             <p className="text-yellow-600 font-bold mb-2 text-lg">Aviso: Dupla repetida, porem mantida por ser a ultima restante do grupo.</p>
@@ -274,11 +310,18 @@ export default function App() {
       <main className="max-w-5xl mx-auto p-6 mt-6 bg-white rounded-lg shadow-lg border border-gray-200">
         {appStage === 'setup' && (
           <div>
-            <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg flex justify-between items-center">
-              <span className="text-blue-800 font-medium">Carga Inicial de Jogadores no Banco de Dados</span>
-              <button onClick={loadInitialPlayers} disabled={isUploading} className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 disabled:opacity-50">
-                {isUploading ? 'Carregando' : 'Carregar Banco de Dados'}
-              </button>
+            <div className="mb-6 p-4 bg-gray-100 rounded-lg flex flex-col md:flex-row md:items-center justify-between border border-gray-300">
+              <span className="font-bold text-gray-700 text-lg mb-4 md:mb-0">Este sorteio e referente a Primeira Rodada?</span>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-6">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" checked={isFirstRound} onChange={() => setIsFirstRound(true)} className="w-5 h-5 text-brandRed focus:ring-brandRed" />
+                  <span className="font-medium text-gray-800">Sim Primeira Rodada</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" checked={!isFirstRound} onChange={() => setIsFirstRound(false)} className="w-5 h-5 text-brandRed focus:ring-brandRed" />
+                  <span className="font-medium text-gray-800">Nao Dividir em Grupos</span>
+                </label>
+              </div>
             </div>
 
             <h2 className="text-2xl font-bold text-brandRed mb-6 border-b pb-2">Passo 1: Selecionar Jogadores Presentes</h2>
@@ -286,14 +329,32 @@ export default function App() {
               <div className="bg-red-50 p-4 rounded-lg border border-red-100">
                 <h3 className="text-xl font-bold text-brandRed mb-4 flex justify-between">
                   <span>Divisao Feminina</span>
-                  <span className="bg-white px-3 py-1 rounded-full text-sm border border-brandRed">{presentFemales.length} Selecionadas</span>
+                  {isFirstRound ? (
+                    <span className="bg-white px-3 py-1 rounded-full text-sm border border-brandRed">{presentFemales.length} Presentes</span>
+                  ) : (
+                    <span className="bg-white px-3 py-1 rounded-full text-sm border border-brandRed">A: {femaleGroupA.length} | B: {femaleGroupB.length}</span>
+                  )}
                 </h3>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   {femaleRoster.map(player => (
-                    <label key={player} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-red-100 rounded transition duration-200">
-                      <input type="checkbox" className="w-5 h-5 text-brandRed focus:ring-brandRed border-gray-300 rounded" onChange={() => togglePresence(player, presentFemales, setPresentFemales)} /> 
-                      <span className="font-medium">{player}</span>
-                    </label>
+                    <div key={player} className="flex justify-between items-center p-2 hover:bg-red-100 rounded transition duration-200 border border-transparent hover:border-red-200">
+                      <span className="font-medium text-sm truncate pr-2">{player}</span>
+                      {isFirstRound ? (
+                        <input type="checkbox" className="w-5 h-5 text-brandRed focus:ring-brandRed border-gray-300 rounded cursor-pointer" 
+                               checked={presentFemales.includes(player)}
+                               onChange={() => togglePresence(player, presentFemales, setPresentFemales)} />
+                      ) : (
+                        <select 
+                          className="text-sm border border-gray-300 rounded p-1 bg-white focus:outline-none focus:ring-1 focus:ring-brandRed"
+                          value={femaleGroupA.includes(player) ? 'A' : femaleGroupB.includes(player) ? 'B' : 'none'}
+                          onChange={(e) => handleGroupSelection(player, e.target.value, setFemaleGroupA, setFemaleGroupB, femaleGroupA, femaleGroupB)}
+                        >
+                          <option value="none">Ausente</option>
+                          <option value="A">Grupo A</option>
+                          <option value="B">Grupo B</option>
+                        </select>
+                      )}
+                    </div>
                   ))}
                   {femaleRoster.length === 0 && <p className="text-sm text-gray-500 col-span-2">Aguardando dados do banco</p>}
                 </div>
@@ -302,14 +363,32 @@ export default function App() {
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <h3 className="text-xl font-bold text-gray-700 mb-4 flex justify-between">
                   <span>Divisao Masculina</span>
-                  <span className="bg-white px-3 py-1 rounded-full text-sm border border-gray-400">{presentMales.length} Selecionados</span>
+                  {isFirstRound ? (
+                    <span className="bg-white px-3 py-1 rounded-full text-sm border border-gray-400">{presentMales.length} Presentes</span>
+                  ) : (
+                    <span className="bg-white px-3 py-1 rounded-full text-sm border border-gray-400">A: {maleGroupA.length} | B: {maleGroupB.length}</span>
+                  )}
                 </h3>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   {maleRoster.map(player => (
-                    <label key={player} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-200 rounded transition duration-200">
-                      <input type="checkbox" className="w-5 h-5 text-brandRed focus:ring-brandRed border-gray-300 rounded" onChange={() => togglePresence(player, presentMales, setPresentMales)} /> 
-                      <span className="font-medium">{player}</span>
-                    </label>
+                    <div key={player} className="flex justify-between items-center p-2 hover:bg-gray-200 rounded transition duration-200 border border-transparent hover:border-gray-300">
+                      <span className="font-medium text-sm truncate pr-2">{player}</span>
+                      {isFirstRound ? (
+                        <input type="checkbox" className="w-5 h-5 text-brandRed focus:ring-brandRed border-gray-300 rounded cursor-pointer" 
+                               checked={presentMales.includes(player)}
+                               onChange={() => togglePresence(player, presentMales, setPresentMales)} />
+                      ) : (
+                        <select 
+                          className="text-sm border border-gray-300 rounded p-1 bg-white focus:outline-none focus:ring-1 focus:ring-brandRed"
+                          value={maleGroupA.includes(player) ? 'A' : maleGroupB.includes(player) ? 'B' : 'none'}
+                          onChange={(e) => handleGroupSelection(player, e.target.value, setMaleGroupA, setMaleGroupB, maleGroupA, maleGroupB)}
+                        >
+                          <option value="none">Ausente</option>
+                          <option value="A">Grupo A</option>
+                          <option value="B">Grupo B</option>
+                        </select>
+                      )}
+                    </div>
                   ))}
                   {maleRoster.length === 0 && <p className="text-sm text-gray-500 col-span-2">Aguardando dados do banco</p>}
                 </div>
