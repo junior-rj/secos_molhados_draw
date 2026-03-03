@@ -30,6 +30,7 @@ export default function App() {
   const [currentPair, setCurrentPair] = useState([]);
   const [historyPairs, setHistoryPairs] = useState([]);
   const [sessionPairs, setSessionPairs] = useState([]);
+  const [selectedHistoryDate, setSelectedHistoryDate] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -178,7 +179,16 @@ export default function App() {
   const confirmPair = async () => {
     const p1 = currentPair[0];
     const p2 = currentPair[1];
-    const newPairData = { player1: p1, player2: p2, timestamp: new Date().toISOString() };
+    const currentGender = appStage === 'drawFemale' ? 'F' : 'M';
+    const currentDate = new Date().toLocaleDateString('pt-BR');
+    
+    const newPairData = { 
+      player1: p1, 
+      player2: p2, 
+      timestamp: new Date().toISOString(),
+      date: currentDate,
+      gender: currentGender
+    };
     
     try {
       await addDoc(collection(db, "drawHistory"), newPairData);
@@ -269,6 +279,12 @@ export default function App() {
     }
   };
 
+  const availableDates = [...new Set(historyPairs.map(p => p.date || new Date(p.timestamp).toLocaleDateString('pt-BR')))].sort((a, b) => {
+    const [dayA, monthA, yearA] = a.split('/');
+    const [dayB, monthB, yearB] = b.split('/');
+    return new Date(yearB, monthB - 1, dayB) - new Date(yearA, monthA - 1, dayA);
+  });
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -297,8 +313,15 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto p-6 mt-6 bg-white rounded-lg shadow-lg border border-gray-200">
+        
         {appStage === 'setup' && (
           <div>
+            <div className="flex justify-end mb-6">
+              <button onClick={() => setAppStage('history')} className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition duration-300 shadow">
+                Consultar Historico de Sorteios
+              </button>
+            </div>
+
             <div className="mb-6 p-4 bg-gray-100 rounded-lg flex flex-col md:flex-row md:items-center justify-between border border-gray-300">
               <span className="font-bold text-gray-700 text-lg mb-4 md:mb-0">Este sorteio e referente a Primeira Rodada?</span>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-6">
@@ -392,6 +415,65 @@ export default function App() {
                 Iniciar Sorteio Masculino
               </button>
             </div>
+          </div>
+        )}
+
+        {appStage === 'history' && (
+          <div>
+            <div className="flex justify-between items-center mb-6 border-b pb-4">
+              <h2 className="text-2xl font-bold text-brandRed">Historico de Sorteios</h2>
+              <button onClick={() => setAppStage('setup')} className="bg-gray-600 text-white px-4 py-2 rounded font-bold hover:bg-gray-700 transition duration-300">
+                Voltar ao Inicio
+              </button>
+            </div>
+
+            <div className="mb-8 p-4 bg-white border border-gray-300 rounded-lg shadow-sm">
+              <label className="font-bold text-gray-700 mr-4">Selecione a Data do Evento:</label>
+              <select 
+                className="border border-gray-300 rounded p-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brandRed font-medium text-gray-800"
+                value={selectedHistoryDate}
+                onChange={e => setSelectedHistoryDate(e.target.value)}
+              >
+                <option value="">Escolha uma data registrada</option>
+                {availableDates.map(date => (
+                  <option key={date} value={date}>{date}</option>
+                ))}
+              </select>
+            </div>
+
+            {selectedHistoryDate && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                  <h3 className="text-xl font-bold text-brandRed mb-4 text-center">Chave Feminina</h3>
+                  <div className="flex flex-col gap-3">
+                    {historyPairs.filter(p => {
+                      const pDate = p.date || new Date(p.timestamp).toLocaleDateString('pt-BR');
+                      const pGender = p.gender || (femaleRoster.includes(p.player1) ? 'F' : 'M');
+                      return pDate === selectedHistoryDate && pGender === 'F';
+                    }).map((pair, idx) => (
+                      <div key={idx} className="bg-white p-4 rounded border border-red-200 shadow-sm text-center font-bold text-gray-800">
+                        {pair.player1} e {pair.player2}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h3 className="text-xl font-bold text-gray-700 mb-4 text-center">Chave Masculina</h3>
+                  <div className="flex flex-col gap-3">
+                    {historyPairs.filter(p => {
+                      const pDate = p.date || new Date(p.timestamp).toLocaleDateString('pt-BR');
+                      const pGender = p.gender || (femaleRoster.includes(p.player1) ? 'F' : 'M');
+                      return pDate === selectedHistoryDate && pGender === 'M';
+                    }).map((pair, idx) => (
+                      <div key={idx} className="bg-white p-4 rounded border border-gray-300 shadow-sm text-center font-bold text-gray-800">
+                        {pair.player1} e {pair.player2}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
