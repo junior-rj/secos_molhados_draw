@@ -30,7 +30,9 @@ export default function App() {
   const [currentPair, setCurrentPair] = useState([]);
   const [historyPairs, setHistoryPairs] = useState([]);
   const [sessionPairs, setSessionPairs] = useState([]);
-  const [selectedHistoryDate, setSelectedHistoryDate] = useState('');
+  
+  const [selectedHistorySession, setSelectedHistorySession] = useState('');
+  const [sessionTimestamp, setSessionTimestamp] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -119,6 +121,7 @@ export default function App() {
       setPoolA([...femaleGroupA]);
       setPoolB([...femaleGroupB]);
     }
+    setSessionTimestamp(new Date().toISOString());
     setAppStage('drawFemale');
   };
 
@@ -145,6 +148,7 @@ export default function App() {
       setPoolA([...maleGroupA]);
       setPoolB([...maleGroupB]);
     }
+    setSessionTimestamp(new Date().toISOString());
     setAppStage('drawMale');
   };
 
@@ -186,6 +190,7 @@ export default function App() {
       player1: p1, 
       player2: p2, 
       timestamp: new Date().toISOString(),
+      sessionTimestamp: sessionTimestamp,
       date: currentDate,
       gender: currentGender
     };
@@ -279,11 +284,27 @@ export default function App() {
     }
   };
 
-  const availableDates = [...new Set(historyPairs.map(p => p.date || new Date(p.timestamp).toLocaleDateString('pt-BR')))].sort((a, b) => {
-    const [dayA, monthA, yearA] = a.split('/');
-    const [dayB, monthB, yearB] = b.split('/');
-    return new Date(yearB, monthB - 1, dayB) - new Date(yearA, monthA - 1, dayA);
+  const availableSessions = [...new Set(historyPairs.map(p => p.sessionTimestamp || p.date || new Date(p.timestamp).toLocaleDateString('pt-BR')))].sort((a, b) => {
+    const getTime = (val) => {
+      if (!val) return 0;
+      if (val.includes('T')) return new Date(val).getTime();
+      if (val.includes('/')) {
+        const parts = val.split('/');
+        if (parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+      }
+      return 0;
+    };
+    return getTime(b) - getTime(a);
   });
+
+  const formatLabel = (val) => {
+    if (!val) return '';
+    if (val.includes('T')) {
+      const d = new Date(val);
+      return `${d.toLocaleDateString('pt-BR')} as ${d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+    }
+    return val;
+  };
 
   if (!user) {
     return (
@@ -428,28 +449,28 @@ export default function App() {
             </div>
 
             <div className="mb-8 p-4 bg-white border border-gray-300 rounded-lg shadow-sm">
-              <label className="font-bold text-gray-700 mr-4">Selecione a Data do Evento:</label>
+              <label className="font-bold text-gray-700 mr-4">Selecione o Evento:</label>
               <select 
                 className="border border-gray-300 rounded p-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brandRed font-medium text-gray-800"
-                value={selectedHistoryDate}
-                onChange={e => setSelectedHistoryDate(e.target.value)}
+                value={selectedHistorySession}
+                onChange={e => setSelectedHistorySession(e.target.value)}
               >
-                <option value="">Escolha uma data registrada</option>
-                {availableDates.map(date => (
-                  <option key={date} value={date}>{date}</option>
+                <option value="">Escolha um evento registrado</option>
+                {availableSessions.map(session => (
+                  <option key={session} value={session}>{formatLabel(session)}</option>
                 ))}
               </select>
             </div>
 
-            {selectedHistoryDate && (
+            {selectedHistorySession && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-red-50 p-4 rounded-lg border border-red-100">
                   <h3 className="text-xl font-bold text-brandRed mb-4 text-center">Chave Feminina</h3>
                   <div className="flex flex-col gap-3">
                     {historyPairs.filter(p => {
-                      const pDate = p.date || new Date(p.timestamp).toLocaleDateString('pt-BR');
+                      const pKey = p.sessionTimestamp || p.date || new Date(p.timestamp).toLocaleDateString('pt-BR');
                       const pGender = p.gender || (femaleRoster.includes(p.player1) ? 'F' : 'M');
-                      return pDate === selectedHistoryDate && pGender === 'F';
+                      return pKey === selectedHistorySession && pGender === 'F';
                     }).map((pair, idx) => (
                       <div key={idx} className="bg-white p-4 rounded border border-red-200 shadow-sm text-center font-bold text-gray-800">
                         {pair.player1} e {pair.player2}
@@ -462,9 +483,9 @@ export default function App() {
                   <h3 className="text-xl font-bold text-gray-700 mb-4 text-center">Chave Masculina</h3>
                   <div className="flex flex-col gap-3">
                     {historyPairs.filter(p => {
-                      const pDate = p.date || new Date(p.timestamp).toLocaleDateString('pt-BR');
+                      const pKey = p.sessionTimestamp || p.date || new Date(p.timestamp).toLocaleDateString('pt-BR');
                       const pGender = p.gender || (femaleRoster.includes(p.player1) ? 'F' : 'M');
-                      return pDate === selectedHistoryDate && pGender === 'M';
+                      return pKey === selectedHistorySession && pGender === 'M';
                     }).map((pair, idx) => (
                       <div key={idx} className="bg-white p-4 rounded border border-gray-300 shadow-sm text-center font-bold text-gray-800">
                         {pair.player1} e {pair.player2}
