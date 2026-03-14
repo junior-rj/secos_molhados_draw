@@ -33,6 +33,9 @@ export default function App() {
   
   const [selectedHistorySession, setSelectedHistorySession] = useState('');
   const [sessionTimestamp, setSessionTimestamp] = useState('');
+  
+  // Novo estado para controlar a animação
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -180,6 +183,19 @@ export default function App() {
     }
   };
 
+  // Função que encapsula o sorteio e roda a animação de 3 segundos
+  const handleDrawSequence = (playerNumber) => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      setIsAnimating(false);
+      if (playerNumber === 1) {
+        drawFirst();
+      } else {
+        drawSecond();
+      }
+    }, 3000);
+  };
+
   const confirmPair = async () => {
     const p1 = currentPair[0];
     const p2 = currentPair[1];
@@ -237,7 +253,7 @@ export default function App() {
 
     if (currentPair.length === 0) {
       return (
-        <button onClick={drawFirst} className="bg-gray-800 text-white text-xl font-bold py-4 px-10 rounded shadow hover:bg-gray-900 transition duration-300">
+        <button onClick={() => handleDrawSequence(1)} disabled={isAnimating} className="bg-gray-800 text-white text-xl font-bold py-4 px-10 rounded shadow hover:bg-gray-900 transition duration-300 disabled:opacity-50">
           Sortear Primeiro Jogador
         </button>
       );
@@ -245,7 +261,7 @@ export default function App() {
     
     if (currentPair.length === 1) {
       return (
-        <button onClick={drawSecond} className="bg-gray-800 text-white text-xl font-bold py-4 px-10 rounded shadow hover:bg-gray-900 transition duration-300">
+        <button onClick={() => handleDrawSequence(2)} disabled={isAnimating} className="bg-gray-800 text-white text-xl font-bold py-4 px-10 rounded shadow hover:bg-gray-900 transition duration-300 disabled:opacity-50">
           Sortear Segundo Jogador
         </button>
       );
@@ -324,7 +340,22 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-800 relative">
+      
+      {/* Overlay de Animação */}
+      {isAnimating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold text-white mb-8 animate-pulse">Sorteando...</h2>
+            <div className="flex space-x-6 justify-center">
+              <span className="text-7xl animate-bounce" style={{ animationDelay: '0s' }}>🎾</span>
+              <span className="text-7xl animate-bounce" style={{ animationDelay: '0.2s' }}>🎾</span>
+              <span className="text-7xl animate-bounce" style={{ animationDelay: '0.4s' }}>🎾</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="bg-brandRed text-white p-4 shadow-md flex justify-between items-center border-b-4 border-brandGold">
         <div className="flex items-center space-x-4">
           <img src={`${import.meta.env.BASE_URL}logo.jpeg`} alt="Logotipo Secos e Molhados" className="w-12 h-12 rounded-full border-2 border-brandGold" />
@@ -506,7 +537,7 @@ export default function App() {
             
             <div className="flex justify-center items-center space-x-6 mb-10 h-40">
               {currentPair.length >= 1 ? (
-                 <div className="bg-brandRed text-white text-4xl font-bold py-8 px-12 rounded-xl shadow-md border-4 border-brandGold animate-pulse">
+                 <div className="bg-brandRed text-white text-4xl font-bold py-8 px-12 rounded-xl shadow-md border-4 border-brandGold">
                    {currentPair[0]}
                  </div>
               ) : (
@@ -518,7 +549,7 @@ export default function App() {
               <div className="text-4xl font-black text-brandGold">&</div>
               
               {currentPair.length === 2 ? (
-                 <div className="bg-brandRed text-white text-4xl font-bold py-8 px-12 rounded-xl shadow-md border-4 border-brandGold animate-pulse">
+                 <div className="bg-brandRed text-white text-4xl font-bold py-8 px-12 rounded-xl shadow-md border-4 border-brandGold">
                    {currentPair[1]}
                  </div>
               ) : (
