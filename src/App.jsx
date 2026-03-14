@@ -34,7 +34,6 @@ export default function App() {
   const [selectedHistorySession, setSelectedHistorySession] = useState('');
   const [sessionTimestamp, setSessionTimestamp] = useState('');
   
-  // Novo estado para controlar a animação
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -183,7 +182,6 @@ export default function App() {
     }
   };
 
-  // Função que encapsula o sorteio e roda a animação de 3 segundos
   const handleDrawSequence = (playerNumber) => {
     setIsAnimating(true);
     setTimeout(() => {
@@ -322,6 +320,14 @@ export default function App() {
     return val;
   };
 
+  const isFemaleDrawValid = isFirstRound 
+    ? presentFemales.length >= 2 && presentFemales.length % 2 === 0
+    : femaleGroupA.length >= 1 && femaleGroupA.length === femaleGroupB.length;
+
+  const isMaleDrawValid = isFirstRound
+    ? presentMales.length >= 2 && presentMales.length % 2 === 0
+    : maleGroupA.length >= 1 && maleGroupA.length === maleGroupB.length;
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -342,7 +348,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800 relative">
       
-      {/* Overlay de Animação */}
       {isAnimating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm">
           <div className="text-center">
@@ -386,6 +391,23 @@ export default function App() {
                   <span className="font-medium text-gray-800">Nao Dividir em Grupos</span>
                 </label>
               </div>
+            </div>
+
+            <div className="mb-8 p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col md:flex-row justify-center items-center gap-6">
+              <button 
+                onClick={startDrawFemale} 
+                disabled={!isFemaleDrawValid}
+                className="bg-brandRed text-white text-lg font-bold py-3 px-8 rounded shadow hover:bg-red-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Iniciar Sorteio Feminino
+              </button>
+              <button 
+                onClick={startDrawMale} 
+                disabled={!isMaleDrawValid}
+                className="bg-gray-800 text-white text-lg font-bold py-3 px-8 rounded shadow hover:bg-gray-900 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Iniciar Sorteio Masculino
+              </button>
             </div>
 
             <h2 className="text-2xl font-bold text-brandRed mb-6 border-b pb-2">Passo 1: Selecionar Jogadores Presentes</h2>
@@ -459,14 +481,6 @@ export default function App() {
               </div>
             </div>
             
-            <div className="mt-8 flex flex-col md:flex-row justify-center items-center gap-4">
-              <button onClick={startDrawFemale} className="bg-brandRed text-white text-lg font-bold py-3 px-8 rounded shadow hover:bg-red-800 transition duration-300">
-                Iniciar Sorteio Feminino
-              </button>
-              <button onClick={startDrawMale} className="bg-gray-800 text-white text-lg font-bold py-3 px-8 rounded shadow hover:bg-gray-900 transition duration-300">
-                Iniciar Sorteio Masculino
-              </button>
-            </div>
           </div>
         )}
 
