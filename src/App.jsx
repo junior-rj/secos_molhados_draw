@@ -77,6 +77,8 @@ export default function App() {
       if (currentUser) {
         fetchData();
       } else {
+        setEmail('');
+        setPassword('');
         setIsLoading(false);
       }
     });
@@ -92,23 +94,75 @@ export default function App() {
     }
   };
 
-  const startDrawFemale = () => {
-    if (isFirstRound) setPool([...presentFemales]);
-    else {
+  const startDrawFemale = async () => {
+    const ts = new Date().toISOString();
+    setSessionTimestamp(ts);
+
+    if (isFirstRound) {
+      setPool([...presentFemales]);
+      try {
+        await addDoc(collection(db, "drawSessions"), {
+          timestamp: ts,
+          date: new Date().toLocaleDateString('pt-BR'),
+          gender: 'F',
+          isFirstRound: true,
+          presentPlayers: presentFemales
+        });
+      } catch (error) {
+        console.error("Erro ao salvar dados do sorteio", error);
+      }
+    } else {
       setPoolA([...femaleGroupA]);
       setPoolB([...femaleGroupB]);
+      try {
+        await addDoc(collection(db, "drawSessions"), {
+          timestamp: ts,
+          date: new Date().toLocaleDateString('pt-BR'),
+          gender: 'F',
+          isFirstRound: false,
+          groupA: femaleGroupA,
+          groupB: femaleGroupB
+        });
+      } catch (error) {
+        console.error("Erro ao salvar dados do sorteio", error);
+      }
     }
-    setSessionTimestamp(new Date().toISOString());
     setAppStage('drawFemale');
   };
 
-  const startDrawMale = () => {
-    if (isFirstRound) setPool([...presentMales]);
-    else {
+  const startDrawMale = async () => {
+    const ts = new Date().toISOString();
+    setSessionTimestamp(ts);
+
+    if (isFirstRound) {
+      setPool([...presentMales]);
+      try {
+        await addDoc(collection(db, "drawSessions"), {
+          timestamp: ts,
+          date: new Date().toLocaleDateString('pt-BR'),
+          gender: 'M',
+          isFirstRound: true,
+          presentPlayers: presentMales
+        });
+      } catch (error) {
+        console.error("Erro ao salvar dados do sorteio", error);
+      }
+    } else {
       setPoolA([...maleGroupA]);
       setPoolB([...maleGroupB]);
+      try {
+        await addDoc(collection(db, "drawSessions"), {
+          timestamp: ts,
+          date: new Date().toLocaleDateString('pt-BR'),
+          gender: 'M',
+          isFirstRound: false,
+          groupA: maleGroupA,
+          groupB: maleGroupB
+        });
+      } catch (error) {
+        console.error("Erro ao salvar dados do sorteio", error);
+      }
     }
-    setSessionTimestamp(new Date().toISOString());
     setAppStage('drawMale');
   };
 
