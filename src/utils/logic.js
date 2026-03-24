@@ -27,15 +27,20 @@ export const togglePlayerPresence = (player, group, setGroup) => {
   }
 };
 
-export const assignGroup = (player, targetGroup, setGrpA, setGrpB, grpA, grpB) => {
-  if (targetGroup === 'A') {
-    if (!grpA.includes(player)) setGrpA([...grpA, player]);
-    if (grpB.includes(player)) setGrpB(grpB.filter(p => p !== player));
-  } else if (targetGroup === 'B') {
-    if (!grpB.includes(player)) setGrpB([...grpB, player]);
-    if (grpA.includes(player)) setGrpA(grpA.filter(p => p !== player));
+export const handleGroupCheckbox = (player, group, setGrpA, setGrpB, grpA, grpB) => {
+  if (group === 'A') {
+    if (grpA.includes(player)) {
+      setGrpA(grpA.filter(p => p !== player));
+    } else {
+      setGrpA([...grpA, player]);
+      setGrpB(grpB.filter(p => p !== player));
+    }
   } else {
-    if (grpA.includes(player)) setGrpA(grpA.filter(p => p !== player));
-    if (grpB.includes(player)) setGrpB(grpB.filter(p => p !== player));
+    if (grpB.includes(player)) {
+      setGrpB(grpB.filter(p => p !== player));
+    } else {
+      setGrpB([...grpB, player]);
+      setGrpA(grpA.filter(p => p !== player));
+    }
   }
 };
