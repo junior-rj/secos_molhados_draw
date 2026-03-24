@@ -1,5 +1,5 @@
 import React from 'react';
-import { togglePlayerPresence, assignGroup } from '../utils/logic';
+import { togglePlayerPresence, handleGroupCheckbox } from '../utils/logic';
 
 export default function Setup({
   isFirstRound, setIsFirstRound,
@@ -73,15 +73,20 @@ export default function Setup({
                          checked={presentFemales.includes(player)}
                          onChange={() => togglePlayerPresence(player, presentFemales, setPresentFemales)} />
                 ) : (
-                  <select 
-                    className="text-sm border border-gray-300 rounded p-1 bg-white focus:outline-none focus:ring-1 focus:ring-brandRed"
-                    value={femaleGroupA.includes(player) ? 'A' : femaleGroupB.includes(player) ? 'B' : 'none'}
-                    onChange={(e) => assignGroup(player, e.target.value, setFemaleGroupA, setFemaleGroupB, femaleGroupA, femaleGroupB)}
-                  >
-                    <option value="none">Ausente</option>
-                    <option value="A">Grupo A</option>
-                    <option value="B">Grupo B</option>
-                  </select>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center space-x-1 cursor-pointer">
+                      <input type="checkbox" className="w-4 h-4 text-brandRed focus:ring-brandRed border-gray-300 rounded"
+                             checked={femaleGroupA.includes(player)}
+                             onChange={() => handleGroupCheckbox(player, 'A', setFemaleGroupA, setFemaleGroupB, femaleGroupA, femaleGroupB)} />
+                      <span className="text-xs font-bold text-gray-600">Grp A</span>
+                    </label>
+                    <label className="flex items-center space-x-1 cursor-pointer">
+                      <input type="checkbox" className="w-4 h-4 text-brandRed focus:ring-brandRed border-gray-300 rounded"
+                             checked={femaleGroupB.includes(player)}
+                             onChange={() => handleGroupCheckbox(player, 'B', setFemaleGroupA, setFemaleGroupB, femaleGroupA, femaleGroupB)} />
+                      <span className="text-xs font-bold text-gray-600">Grp B</span>
+                    </label>
+                  </div>
                 )}
               </div>
             ))}
@@ -107,15 +112,20 @@ export default function Setup({
                          checked={presentMales.includes(player)}
                          onChange={() => togglePlayerPresence(player, presentMales, setPresentMales)} />
                 ) : (
-                  <select 
-                    className="text-sm border border-gray-300 rounded p-1 bg-white focus:outline-none focus:ring-1 focus:ring-brandRed"
-                    value={maleGroupA.includes(player) ? 'A' : maleGroupB.includes(player) ? 'B' : 'none'}
-                    onChange={(e) => assignGroup(player, e.target.value, setMaleGroupA, setMaleGroupB, maleGroupA, maleGroupB)}
-                  >
-                    <option value="none">Ausente</option>
-                    <option value="A">Grupo A</option>
-                    <option value="B">Grupo B</option>
-                  </select>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center space-x-1 cursor-pointer">
+                      <input type="checkbox" className="w-4 h-4 text-brandRed focus:ring-brandRed border-gray-300 rounded"
+                             checked={maleGroupA.includes(player)}
+                             onChange={() => handleGroupCheckbox(player, 'A', setMaleGroupA, setMaleGroupB, maleGroupA, maleGroupB)} />
+                      <span className="text-xs font-bold text-gray-600">Grp A</span>
+                    </label>
+                    <label className="flex items-center space-x-1 cursor-pointer">
+                      <input type="checkbox" className="w-4 h-4 text-brandRed focus:ring-brandRed border-gray-300 rounded"
+                             checked={maleGroupB.includes(player)}
+                             onChange={() => handleGroupCheckbox(player, 'B', setMaleGroupA, setMaleGroupB, maleGroupA, maleGroupB)} />
+                      <span className="text-xs font-bold text-gray-600">Grp B</span>
+                    </label>
+                  </div>
                 )}
               </div>
             ))}
