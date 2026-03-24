@@ -50,6 +50,9 @@ export default function App() {
         historySnapshot.forEach((documentSnapshot) => {
           pairs.push(documentSnapshot.data());
         });
+        
+        pairs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        
         setHistoryPairs(pairs);
 
         const playersSnapshot = await getDocs(collection(db, "players"));
