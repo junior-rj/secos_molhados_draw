@@ -14,6 +14,41 @@ export default function Setup({
   setAppStage,
   isFemaleDrawValid, isMaleDrawValid
 }) {
+
+  const handleSelectAllFemales = () => {
+    if (isFirstRound) {
+      if (presentFemales.length === femaleRoster.length && femaleRoster.length > 0) {
+        setPresentFemales([]);
+      } else {
+        setPresentFemales([...femaleRoster]);
+      }
+    } else {
+      if (femaleGroupA.length === femaleRoster.length && femaleRoster.length > 0) {
+        setFemaleGroupA([]);
+      } else {
+        setFemaleGroupA([...femaleRoster]);
+        setFemaleGroupB([]);
+      }
+    }
+  };
+
+  const handleSelectAllMales = () => {
+    if (isFirstRound) {
+      if (presentMales.length === maleRoster.length && maleRoster.length > 0) {
+        setPresentMales([]);
+      } else {
+        setPresentMales([...maleRoster]);
+      }
+    } else {
+      if (maleGroupA.length === maleRoster.length && maleRoster.length > 0) {
+        setMaleGroupA([]);
+      } else {
+        setMaleGroupA([...maleRoster]);
+        setMaleGroupB([]);
+      }
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-end mb-6">
@@ -56,8 +91,18 @@ export default function Setup({
       <h2 className="text-2xl font-bold text-brandRed mb-6 border-b pb-2">Passo 1: Selecionar Jogadores Presentes</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-red-50 p-4 rounded-lg border border-red-100">
-          <h3 className="text-xl font-bold text-brandRed mb-4 flex justify-between">
-            <span>Divisao Feminina</span>
+          <h3 className="text-xl font-bold text-brandRed mb-4 flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <span>Divisao Feminina</span>
+              <button 
+                onClick={handleSelectAllFemales} 
+                className="text-xs bg-red-100 text-brandRed px-3 py-1 rounded hover:bg-red-200 transition duration-300 font-bold"
+              >
+                {isFirstRound 
+                  ? (presentFemales.length === femaleRoster.length && femaleRoster.length > 0 ? 'Desmarcar' : 'Marcar Todos') 
+                  : (femaleGroupA.length === femaleRoster.length && femaleRoster.length > 0 ? 'Limpar Grupo' : 'Todos no Grupo A')}
+              </button>
+            </div>
             {isFirstRound ? (
               <span className="bg-white px-3 py-1 rounded-full text-sm border border-brandRed">{presentFemales.length} Presentes</span>
             ) : (
@@ -95,8 +140,18 @@ export default function Setup({
         </div>
         
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h3 className="text-xl font-bold text-gray-700 mb-4 flex justify-between">
-            <span>Divisao Masculina</span>
+          <h3 className="text-xl font-bold text-gray-700 mb-4 flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <span>Divisao Masculina</span>
+              <button 
+                onClick={handleSelectAllMales} 
+                className="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 transition duration-300 font-bold"
+              >
+                {isFirstRound 
+                  ? (presentMales.length === maleRoster.length && maleRoster.length > 0 ? 'Desmarcar' : 'Marcar Todos') 
+                  : (maleGroupA.length === maleRoster.length && maleRoster.length > 0 ? 'Limpar Grupo' : 'Todos no Grupo A')}
+              </button>
+            </div>
             {isFirstRound ? (
               <span className="bg-white px-3 py-1 rounded-full text-sm border border-gray-400">{presentMales.length} Presentes</span>
             ) : (
