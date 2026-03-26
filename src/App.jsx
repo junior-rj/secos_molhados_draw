@@ -195,7 +195,7 @@ export default function App() {
           setPoolB(poolB.filter(p => p !== p2));
         }
       }
-    }, 3000);
+    }, 1500);
   };
 
   const confirmPair = async () => {
