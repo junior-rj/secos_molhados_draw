@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 import { Header, LoadingScreen } from './components/Shared';
 import Auth from './components/Auth';
@@ -237,6 +237,45 @@ export default function App() {
     setAppStage('setup');
   };
 
+  const handleDeleteByDate = async (dateToDelete) => {
+    setIsLoading(true);
+    try {
+      const historySnapshot = await getDocs(collection(db, "drawHistory"));
+      const sessionSnapshot = await getDocs(collection(db, "drawSessions"));
+
+      const deletePromises = [];
+
+      historySnapshot.forEach(documentSnapshot => {
+        const data = documentSnapshot.data();
+        const docDate = data.date || new Date(data.timestamp).toLocaleDateString('pt-BR');
+        if (docDate === dateToDelete) {
+          deletePromises.push(deleteDoc(doc(db, "drawHistory", documentSnapshot.id)));
+        }
+      });
+
+      sessionSnapshot.forEach(documentSnapshot => {
+        const data = documentSnapshot.data();
+        const docDate = data.date || new Date(data.timestamp).toLocaleDateString('pt-BR');
+        if (docDate === dateToDelete) {
+          deletePromises.push(deleteDoc(doc(db, "drawSessions", documentSnapshot.id)));
+        }
+      });
+
+      await Promise.all(deletePromises);
+
+      setHistoryPairs(prev => prev.filter(p => {
+        const pDate = p.date || new Date(p.timestamp).toLocaleDateString('pt-BR');
+        return pDate !== dateToDelete;
+      }));
+
+      alert(`Todos os registros do dia ${dateToDelete} foram excluidos com sucesso do banco de dados.`);
+    } catch (error) {
+      console.error("Erro ao excluir registros", error);
+      alert("Ocorreu um erro ao excluir os registros. Tente novamente.");
+    }
+    setIsLoading(false);
+  };
+
   const drawStats = (appStage === 'drawFemale' || appStage === 'drawMale') 
     ? calculateDrawStats(isFirstRound, pool, poolA, poolB, currentPair, historyPairs)
     : { validCombinations: 0, repeatedPairsNeeded: 0, validPartnersForCurrent: null };
@@ -271,6 +310,7 @@ export default function App() {
           <History 
             setAppStage={setAppStage} historyPairs={historyPairs} femaleRoster={femaleRoster}
             selectedHistorySession={selectedHistorySession} setSelectedHistorySession={setSelectedHistorySession}
+            handleDeleteByDate={handleDeleteByDate}
           />
         )}
         {(appStage === 'drawFemale' || appStage === 'drawMale') && (
