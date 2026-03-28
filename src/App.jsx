@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
-import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 import { Header, LoadingScreen } from './components/Shared';
 import Auth from './components/Auth';
@@ -43,6 +43,27 @@ export default function App() {
   const [sessionTimestamp, setSessionTimestamp] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const resetSystemState = () => {
+    setEmail('');
+    setPassword('');
+    setIsFirstRound(true);
+    setPresentFemales([]);
+    setPresentMales([]);
+    setFemaleGroupA([]);
+    setFemaleGroupB([]);
+    setMaleGroupA([]);
+    setMaleGroupB([]);
+    setAppStage('setup');
+    setPool([]);
+    setPoolA([]);
+    setPoolB([]);
+    setCurrentPair([]);
+    setSessionPairs([]);
+    setSelectedHistorySession('');
+    setSessionTimestamp('');
+    setIsAnimating(false);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -78,8 +99,7 @@ export default function App() {
       if (currentUser) {
         fetchData();
       } else {
-        setEmail('');
-        setPassword('');
+        resetSystemState();
         setIsLoading(false);
       }
     });
