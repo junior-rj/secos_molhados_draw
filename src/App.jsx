@@ -3,12 +3,13 @@ import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 
-import { Header, LoadingScreen, DoneScreen } from './components/Shared';
+import { Header, LoadingScreen } from './components/Shared';
 import Auth from './components/Auth';
 import History from './components/History';
 import Setup from './components/Setup';
 import Draw from './components/Draw';
-import { validateFemaleDraw, validateMaleDraw } from './utils/logic';
+import Review from './components/Review';
+import { validateFemaleDraw, validateMaleDraw, calculateDrawStats } from './utils/logic';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -94,74 +95,32 @@ export default function App() {
     }
   };
 
-  const startDrawFemale = async () => {
+  const startDrawFemale = () => {
     const ts = new Date().toISOString();
     setSessionTimestamp(ts);
+    setSessionPairs([]);
+    setCurrentPair([]);
 
     if (isFirstRound) {
       setPool([...presentFemales]);
-      try {
-        await addDoc(collection(db, "drawSessions"), {
-          timestamp: ts,
-          date: new Date().toLocaleDateString('pt-BR'),
-          gender: 'F',
-          isFirstRound: true,
-          presentPlayers: presentFemales
-        });
-      } catch (error) {
-        console.error("Erro ao salvar dados do sorteio", error);
-      }
     } else {
       setPoolA([...femaleGroupA]);
       setPoolB([...femaleGroupB]);
-      try {
-        await addDoc(collection(db, "drawSessions"), {
-          timestamp: ts,
-          date: new Date().toLocaleDateString('pt-BR'),
-          gender: 'F',
-          isFirstRound: false,
-          groupA: femaleGroupA,
-          groupB: femaleGroupB
-        });
-      } catch (error) {
-        console.error("Erro ao salvar dados do sorteio", error);
-      }
     }
     setAppStage('drawFemale');
   };
 
-  const startDrawMale = async () => {
+  const startDrawMale = () => {
     const ts = new Date().toISOString();
     setSessionTimestamp(ts);
+    setSessionPairs([]);
+    setCurrentPair([]);
 
     if (isFirstRound) {
       setPool([...presentMales]);
-      try {
-        await addDoc(collection(db, "drawSessions"), {
-          timestamp: ts,
-          date: new Date().toLocaleDateString('pt-BR'),
-          gender: 'M',
-          isFirstRound: true,
-          presentPlayers: presentMales
-        });
-      } catch (error) {
-        console.error("Erro ao salvar dados do sorteio", error);
-      }
     } else {
       setPoolA([...maleGroupA]);
       setPoolB([...maleGroupB]);
-      try {
-        await addDoc(collection(db, "drawSessions"), {
-          timestamp: ts,
-          date: new Date().toLocaleDateString('pt-BR'),
-          gender: 'M',
-          isFirstRound: false,
-          groupA: maleGroupA,
-          groupB: maleGroupB
-        });
-      } catch (error) {
-        console.error("Erro ao salvar dados do sorteio", error);
-      }
     }
     setAppStage('drawMale');
   };
@@ -198,7 +157,7 @@ export default function App() {
     }, 1500);
   };
 
-  const confirmPair = async () => {
+  const confirmPair = () => {
     const newPairData = { 
       player1: currentPair[0], 
       player2: currentPair[1], 
@@ -208,31 +167,79 @@ export default function App() {
       gender: appStage === 'drawFemale' ? 'F' : 'M'
     };
     
-    try {
-      await addDoc(collection(db, "drawHistory"), newPairData);
-    } catch (err) {
-      console.error("Erro ao salvar partida no Firebase", err);
-    }
-    
-    setHistoryPairs([...historyPairs, newPairData]);
     setSessionPairs([...sessionPairs, newPairData]);
     setCurrentPair([]);
 
     if (isFirstRound) {
-      if (pool.length === 0) setAppStage('done');
+      if (pool.length === 0) setAppStage(appStage === 'drawFemale' ? 'reviewFemale' : 'reviewMale');
     } else {
-      if (poolA.length === 0) setAppStage('done');
+      if (poolA.length === 0) setAppStage(appStage === 'drawFemale' ? 'reviewFemale' : 'reviewMale');
     }
   };
 
   const cancelPair = () => {
-    if (isFirstRound) setPool([...pool, currentPair[0], currentPair[1]]);
+    if (isFirstRound) setPool([...pool, currentPair[0], currentPair[1]].filter(Boolean));
     else {
-      setPoolA([...poolA, currentPair[0]]);
-      setPoolB([...poolB, currentPair[1]]);
+      setPoolA([...poolA, currentPair[0]].filter(Boolean));
+      if (currentPair.length > 1) setPoolB([...poolB, currentPair[1]]);
     }
     setCurrentPair([]);
   };
+
+  const saveTournament = async () => {
+    setIsLoading(true);
+    try {
+      const isFemale = appStage === 'reviewFemale';
+      const sessionData = {
+        timestamp: sessionTimestamp,
+        date: new Date().toLocaleDateString('pt-BR'),
+        gender: isFemale ? 'F' : 'M',
+        isFirstRound: isFirstRound,
+      };
+      
+      if (isFirstRound) {
+        sessionData.presentPlayers = isFemale ? presentFemales : presentMales;
+      } else {
+        sessionData.groupA = isFemale ? femaleGroupA : maleGroupA;
+        sessionData.groupB = isFemale ? femaleGroupB : maleGroupB;
+      }
+      
+      await addDoc(collection(db, "drawSessions"), sessionData);
+
+      for (const pair of sessionPairs) {
+        await addDoc(collection(db, "drawHistory"), pair);
+      }
+
+      setHistoryPairs([...historyPairs, ...sessionPairs]);
+
+      if (isFemale) {
+        setPresentFemales([]);
+        setFemaleGroupA([]);
+        setFemaleGroupB([]);
+      } else {
+        setPresentMales([]);
+        setMaleGroupA([]);
+        setMaleGroupB([]);
+      }
+      
+      alert("Torneio confirmado e salvo com sucesso!");
+      setAppStage('setup');
+    } catch (err) {
+      console.error("Erro ao salvar", err);
+      alert("Erro ao salvar torneio.");
+    }
+    setIsLoading(false);
+  };
+
+  const discardTournament = () => {
+    setSessionPairs([]);
+    setCurrentPair([]);
+    setAppStage('setup');
+  };
+
+  const drawStats = (appStage === 'drawFemale' || appStage === 'drawMale') 
+    ? calculateDrawStats(isFirstRound, pool, poolA, poolB, currentPair, historyPairs)
+    : { validCombinations: 0, repeatedPairsNeeded: 0, validPartnersForCurrent: null };
 
   if (isLoading) return <LoadingScreen />;
 
@@ -271,9 +278,17 @@ export default function App() {
             appStage={appStage} currentPair={currentPair} isAnimating={isAnimating}
             handleDrawSequence={handleDrawSequence} confirmPair={confirmPair}
             cancelPair={cancelPair} historyPairs={historyPairs} sessionPairs={sessionPairs}
+            drawStats={drawStats}
           />
         )}
-        {appStage === 'done' && <DoneScreen sessionPairs={sessionPairs} />}
+        {(appStage === 'reviewFemale' || appStage === 'reviewMale') && (
+          <Review 
+            sessionPairs={sessionPairs} 
+            saveTournament={saveTournament} 
+            discardTournament={discardTournament} 
+            appStage={appStage} 
+          />
+        )}
       </main>
     </div>
   );

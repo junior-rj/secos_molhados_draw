@@ -9,7 +9,8 @@ export default function Draw({
   confirmPair,
   cancelPair,
   historyPairs,
-  sessionPairs
+  sessionPairs,
+  drawStats
 }) {
   
   const renderDrawButtons = () => {
@@ -83,9 +84,27 @@ export default function Draw({
         </div>
       )}
 
-      <h2 className="text-3xl font-bold mb-8 text-gray-800">
+      <h2 className="text-3xl font-bold mb-6 text-gray-800">
         {appStage === 'drawFemale' ? 'Sorteio Chave Feminina' : 'Sorteio Chave Masculina'}
       </h2>
+
+      <div className="mb-8 flex flex-col items-center justify-center space-y-3">
+        {currentPair.length === 0 ? (
+          <span className="bg-blue-50 text-blue-800 px-6 py-2 rounded-full font-bold border border-blue-200 shadow-sm text-lg">
+            Possiveis combinacoes sem repeticao na urna: {drawStats.validCombinations}
+          </span>
+        ) : currentPair.length === 1 ? (
+          <span className="bg-indigo-50 text-indigo-800 px-6 py-2 rounded-full font-bold border border-indigo-200 shadow-sm text-lg">
+            Parceiros sem repeticao disponiveis para {currentPair[0]}: {drawStats.validPartnersForCurrent}
+          </span>
+        ) : null}
+
+        {drawStats.repeatedPairsNeeded > 0 && currentPair.length < 2 && (
+          <span className="bg-red-50 text-red-600 px-6 py-2 rounded-full font-bold border border-red-200 shadow-sm animate-pulse text-lg">
+            Atencao: Sem combinacoes suficientes. {drawStats.repeatedPairsNeeded} {drawStats.repeatedPairsNeeded === 1 ? 'dupla tera' : 'duplas terao'} que ser repetida!
+          </span>
+        )}
+      </div>
       
       <div className="flex justify-center items-center space-x-6 mb-10 h-40">
         {currentPair.length >= 1 ? (
