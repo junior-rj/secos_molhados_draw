@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 import { Header, LoadingScreen } from './components/Shared';
 import Auth from './components/Auth';
@@ -62,6 +62,25 @@ export default function App() {
     setSelectedHistorySession('');
     setSessionTimestamp('');
     setIsAnimating(false);
+  };
+
+  const handleToggleFirstRound = (value) => {
+    setIsFirstRound(value);
+    setPresentFemales([]);
+    setPresentMales([]);
+    setFemaleGroupA([]);
+    setFemaleGroupB([]);
+    setMaleGroupA([]);
+    setMaleGroupB([]);
+  };
+
+  const goBackToSetup = () => {
+    setAppStage('setup');
+    setSessionPairs([]);
+    setCurrentPair([]);
+    setPool([]);
+    setPoolA([]);
+    setPoolB([]);
   };
 
   useEffect(() => {
@@ -298,7 +317,7 @@ export default function App() {
 
   const drawStats = (appStage === 'drawFemale' || appStage === 'drawMale') 
     ? calculateDrawStats(isFirstRound, pool, poolA, poolB, currentPair, historyPairs)
-    : { validCombinations: 0, repeatedPairsNeeded: 0, validPartnersForCurrent: null };
+    : { totalPossible: 0, alreadyPlayed: 0, uniqueAvailable: 0 };
 
   if (isLoading) return <LoadingScreen />;
 
@@ -312,7 +331,7 @@ export default function App() {
       <main className="max-w-5xl mx-auto p-6 mt-6 bg-white rounded-lg shadow-lg border border-gray-200">
         {appStage === 'setup' && (
           <Setup 
-            isFirstRound={isFirstRound} setIsFirstRound={setIsFirstRound}
+            isFirstRound={isFirstRound} handleToggleFirstRound={handleToggleFirstRound}
             presentFemales={presentFemales} setPresentFemales={setPresentFemales}
             presentMales={presentMales} setPresentMales={setPresentMales}
             femaleGroupA={femaleGroupA} setFemaleGroupA={setFemaleGroupA}
@@ -338,7 +357,7 @@ export default function App() {
             appStage={appStage} currentPair={currentPair} isAnimating={isAnimating}
             handleDrawSequence={handleDrawSequence} confirmPair={confirmPair}
             cancelPair={cancelPair} historyPairs={historyPairs} sessionPairs={sessionPairs}
-            drawStats={drawStats}
+            drawStats={drawStats} goBackToSetup={goBackToSetup}
           />
         )}
         {(appStage === 'reviewFemale' || appStage === 'reviewMale') && (
@@ -346,7 +365,8 @@ export default function App() {
             sessionPairs={sessionPairs} 
             saveTournament={saveTournament} 
             discardTournament={discardTournament} 
-            appStage={appStage} 
+            appStage={appStage}
+            goBackToSetup={goBackToSetup}
           />
         )}
       </main>
