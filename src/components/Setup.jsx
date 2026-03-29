@@ -2,7 +2,7 @@ import React from 'react';
 import { togglePlayerPresence, handleGroupCheckbox } from '../utils/logic';
 
 export default function Setup({
-  isFirstRound, setIsFirstRound,
+  isFirstRound, handleToggleFirstRound,
   presentFemales, setPresentFemales,
   presentMales, setPresentMales,
   femaleGroupA, setFemaleGroupA,
@@ -61,11 +61,11 @@ export default function Setup({
         <span className="font-bold text-gray-700 text-lg mb-4 md:mb-0">Este sorteio e referente a Primeira Rodada?</span>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-6">
           <label className="flex items-center space-x-2 cursor-pointer">
-            <input type="radio" checked={isFirstRound} onChange={() => setIsFirstRound(true)} className="w-5 h-5 text-brandRed focus:ring-brandRed" />
+            <input type="radio" checked={isFirstRound} onChange={() => handleToggleFirstRound(true)} className="w-5 h-5 text-brandRed focus:ring-brandRed" />
             <span className="font-medium text-gray-800">Sim, Primeira Rodada</span>
           </label>
           <label className="flex items-center space-x-2 cursor-pointer">
-            <input type="radio" checked={!isFirstRound} onChange={() => setIsFirstRound(false)} className="w-5 h-5 text-brandRed focus:ring-brandRed" />
+            <input type="radio" checked={!isFirstRound} onChange={() => handleToggleFirstRound(false)} className="w-5 h-5 text-brandRed focus:ring-brandRed" />
             <span className="font-medium text-gray-800">Nao, Dividir em Grupos</span>
           </label>
         </div>

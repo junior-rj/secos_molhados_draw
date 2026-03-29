@@ -1,10 +1,17 @@
 import React from 'react';
 
-export default function Review({ sessionPairs, saveTournament, discardTournament, appStage }) {
+export default function Review({ sessionPairs, saveTournament, discardTournament, appStage, goBackToSetup }) {
   const isFemale = appStage === 'reviewFemale';
   
   return (
-    <div className="text-center py-10">
+    <div className="text-center py-6">
+      
+      <div className="flex justify-end mb-6 border-b pb-4">
+        <button onClick={goBackToSetup} className="bg-gray-600 text-white px-6 py-2 rounded font-bold hover:bg-gray-700 transition duration-300 shadow">
+          Voltar para Configuracao
+        </button>
+      </div>
+
       <h2 className="text-3xl font-bold mb-6 text-brandRed">
         Resumo do Torneio {isFemale ? 'Feminino' : 'Masculino'}
       </h2>

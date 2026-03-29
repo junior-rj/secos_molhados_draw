@@ -10,7 +10,8 @@ export default function Draw({
   cancelPair,
   historyPairs,
   sessionPairs,
-  drawStats
+  drawStats,
+  goBackToSetup
 }) {
   
   const renderDrawButtons = () => {
@@ -89,9 +90,14 @@ export default function Draw({
         </div>
       )}
 
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">
-        {appStage === 'drawFemale' ? 'Sorteio Chave Feminina' : 'Sorteio Chave Masculina'}
-      </h2>
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b pb-4">
+        <h2 className="text-3xl font-bold text-gray-800">
+          {appStage === 'drawFemale' ? 'Sorteio Chave Feminina' : 'Sorteio Chave Masculina'}
+        </h2>
+        <button onClick={goBackToSetup} className="bg-gray-600 text-white px-6 py-2 rounded font-bold hover:bg-gray-700 transition duration-300 shadow">
+          Voltar para Configuracao
+        </button>
+      </div>
 
       <div className="mb-8 flex justify-center">
          <div className="bg-blue-50 text-blue-900 px-6 py-4 rounded-lg font-medium border border-blue-200 shadow-sm text-lg flex flex-col md:flex-row md:space-x-4 items-center">
