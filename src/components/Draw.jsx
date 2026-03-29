@@ -39,13 +39,18 @@ export default function Draw({
       if (isRepeated) {
         return (
           <div className="flex flex-col items-center space-y-4">
-            <p className="text-yellow-600 font-bold mb-2 text-lg">Aviso: Esta dupla ja jogou junta anteriormente.</p>
-            <div className="flex space-x-4">
-              <button onClick={confirmPair} className="bg-green-600 text-white text-xl font-bold py-4 px-10 rounded shadow hover:bg-green-700 transition duration-300">
-                Confirmar Dupla
+            <div className="bg-yellow-100 border border-yellow-400 p-6 rounded-lg text-center max-w-3xl shadow-md">
+                <p className="text-yellow-800 font-bold text-2xl mb-4">Aviso: Esta dupla ja jogou junta no passado.</p>
+                <p className="text-yellow-900 text-lg font-medium leading-relaxed">
+                  Avaliando os jogadores que ainda estao na urna existem <strong className="text-xl text-green-700">{drawStats.uniqueAvailable}</strong> combinacoes ineditas disponiveis e <strong className="text-xl text-red-700">{drawStats.alreadyPlayed}</strong> combinacoes que ja se repetiram. Deseja confirmar essa dupla mesmo assim ou recusar para sortear novamente?
+                </p>
+            </div>
+            <div className="flex space-x-4 mt-4">
+              <button onClick={confirmPair} className="bg-yellow-600 text-white text-xl font-bold py-4 px-10 rounded shadow hover:bg-yellow-700 transition duration-300">
+                Confirmar Dupla Repetida
               </button>
               <button onClick={cancelPair} className="bg-red-600 text-white text-xl font-bold py-4 px-10 rounded shadow hover:bg-red-700 transition duration-300">
-                Recusar Dupla
+                Recusar e Sortear Novamente
               </button>
             </div>
           </div>
@@ -53,7 +58,7 @@ export default function Draw({
       } else {
         return (
           <div className="flex flex-col items-center space-y-4">
-            <p className="text-green-600 font-bold mb-2 text-lg">Dupla valida para a sessao.</p>
+            <p className="text-green-600 font-bold mb-2 text-xl">Dupla inedita e valida para a sessao.</p>
             <div className="flex space-x-4">
               <button onClick={confirmPair} className="bg-green-600 text-white text-xl font-bold py-4 px-10 rounded shadow hover:bg-green-700 transition duration-300">
                 Confirmar Dupla
@@ -88,22 +93,14 @@ export default function Draw({
         {appStage === 'drawFemale' ? 'Sorteio Chave Feminina' : 'Sorteio Chave Masculina'}
       </h2>
 
-      <div className="mb-8 flex flex-col items-center justify-center space-y-3">
-        {currentPair.length === 0 ? (
-          <span className="bg-blue-50 text-blue-800 px-6 py-2 rounded-full font-bold border border-blue-200 shadow-sm text-lg">
-            Possiveis combinacoes sem repeticao na urna: {drawStats.validCombinations}
-          </span>
-        ) : currentPair.length === 1 ? (
-          <span className="bg-indigo-50 text-indigo-800 px-6 py-2 rounded-full font-bold border border-indigo-200 shadow-sm text-lg">
-            Parceiros sem repeticao disponiveis para {currentPair[0]}: {drawStats.validPartnersForCurrent}
-          </span>
-        ) : null}
-
-        {drawStats.repeatedPairsNeeded > 0 && currentPair.length < 2 && (
-          <span className="bg-red-50 text-red-600 px-6 py-2 rounded-full font-bold border border-red-200 shadow-sm animate-pulse text-lg">
-            Atencao: Sem combinacoes suficientes. {drawStats.repeatedPairsNeeded} {drawStats.repeatedPairsNeeded === 1 ? 'dupla tera' : 'duplas terao'} que ser repetida!
-          </span>
-        )}
+      <div className="mb-8 flex justify-center">
+         <div className="bg-blue-50 text-blue-900 px-6 py-4 rounded-lg font-medium border border-blue-200 shadow-sm text-lg flex flex-col md:flex-row md:space-x-4 items-center">
+            <span>Combinacoes totais: <strong className="font-black">{drawStats.totalPossible}</strong></span>
+            <span className="hidden md:inline">|</span>
+            <span>Ja jogaram juntas: <strong className="font-black">{drawStats.alreadyPlayed}</strong></span>
+            <span className="hidden md:inline">|</span>
+            <span>Ineditas disponiveis: <strong className="font-black text-green-700">{drawStats.uniqueAvailable}</strong></span>
+         </div>
       </div>
       
       <div className="flex justify-center items-center space-x-6 mb-10 h-40">
